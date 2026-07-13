@@ -1,0 +1,378 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>医美抖音文案助手</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI","PingFang SC","Microsoft YaHei",sans-serif;background:#f5f5f7;color:#1d1d1f;min-height:100vh}
+.header{background:linear-gradient(135deg,#6b2fa0,#8b5cf6);color:#fff;padding:32px 20px 24px;text-align:center}
+.header h1{font-size:24px;font-weight:700;margin-bottom:6px}
+.header p{font-size:14px;opacity:.85}
+.container{max-width:720px;margin:0 auto;padding:20px 16px 40px}
+.card{background:#fff;border-radius:12px;padding:20px;margin-bottom:16px;box-shadow:0 1px 3px rgba(0,0,0,.08)}
+.card h2{font-size:16px;font-weight:600;margin-bottom:14px;color:#6b2fa0}
+.form-group{margin-bottom:14px}
+.form-group:last-child{margin-bottom:0}
+.form-group label{display:block;font-size:13px;font-weight:500;color:#6b6b70;margin-bottom:5px}
+.form-group input,.form-group select{width:100%;padding:10px 12px;font-size:14px;border:1.5px solid #e5e5ea;border-radius:8px;outline:none;transition:border-color .2s;background:#fff}
+.form-group input:focus,.form-group select:focus{border-color:#8b5cf6;box-shadow:0 0 0 3px rgba(139,92,246,.15)}
+.form-row{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.btn{width:100%;padding:12px;font-size:15px;font-weight:600;border:none;border-radius:10px;cursor:pointer;transition:all .2s}
+.btn-primary{background:linear-gradient(135deg,#6b2fa0,#8b5cf6);color:#fff}
+.btn-primary:hover{opacity:.9;transform:translateY(-1px);box-shadow:0 4px 12px rgba(107,47,160,.3)}
+.btn-primary:disabled{opacity:.5;cursor:not-allowed;transform:none;box-shadow:none}
+.btn-secondary{background:#f5f5f7;color:#1d1d1f;border:1.5px solid #e5e5ea}
+.btn-secondary:hover{background:#e8e8ed}
+
+/* Loading */
+.loading{display:none;text-align:center;padding:24px}
+.loading.active{display:block}
+.spinner{width:32px;height:32px;border:3px solid #e5e5ea;border-top-color:#8b5cf6;border-radius:50%;animation:spin .7s linear infinite;margin:0 auto 10px}
+@keyframes spin{to{transform:rotate(360deg)}}
+.loading p{font-size:13px;color:#8e8e93}
+
+/* Output */
+.output-area{display:none}
+.output-area.active{display:block}
+.output-content{white-space:pre-wrap;font-size:14px;line-height:1.7;color:#1d1d1f;padding:16px;background:#fafafa;border-radius:8px;border:1px solid #e5e5ea;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI","PingFang SC","Microsoft YaHei",sans-serif}
+.output-content .section-title{color:#6b2fa0;font-weight:600;font-size:15px;margin-top:16px;margin-bottom:4px}
+.output-content .section-title:first-child{margin-top:0}
+.output-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:10px}
+.output-header h3{font-size:15px;font-weight:600}
+.copy-btn{background:transparent;border:1.5px solid #e5e5ea;border-radius:6px;padding:6px 12px;font-size:12px;cursor:pointer;color:#6b6b70;transition:all .2s}
+.copy-btn:hover{background:#f5f5f7;color:#1d1d1f}
+.copy-btn.copied{background:#34c759;color:#fff;border-color:#34c759}
+.toast{position:fixed;bottom:24px;left:50%;transform:translateX(-50%);background:#1d1d1f;color:#fff;padding:10px 20px;border-radius:8px;font-size:13px;opacity:0;transition:opacity .3s;pointer-events:none}
+.toast.show{opacity:1}
+
+/* Error */
+.error{display:none;background:#fff2f0;border:1px solid #ffccc7;border-radius:8px;padding:12px 16px;font-size:13px;color:#cf1322;margin-top:12px}
+.error.active{display:block}
+
+@media (max-width:480px){
+  .header{padding:24px 16px 18px}
+  .header h1{font-size:20px}
+  .container{padding:12px 12px 32px}
+  .card{padding:16px}
+  .form-row{grid-template-columns:1fr}
+}
+</style>
+</head>
+<body>
+
+<div class="header">
+  <h1>✍️ 医美抖音文案助手</h1>
+  <p>输入项目信息，一键生成可发布的爆款笔记</p>
+</div>
+
+<div class="container">
+
+  <!-- Settings Card -->
+  <div class="card">
+    <h2>⚙️ API 配置</h2>
+    <div class="form-group">
+      <label>DeepSeek API Key</label>
+      <input type="password" id="apiKey" placeholder="sk-..." value="sk-618a14a5512a4f04951f220f3483bb71">
+    </div>
+  </div>
+
+  <!-- Input Card -->
+  <div class="card">
+    <h2>📝 笔记信息</h2>
+    <div class="form-group">
+      <label>项目名称 *</label>
+      <input type="text" id="project" placeholder="如：光子嫩肤、水光针、热玛吉、皮秒..." value="光子嫩肤">
+    </div>
+    <div class="form-row">
+      <div class="form-group">
+        <label>目标人群</label>
+        <input type="text" id="audience" placeholder="如：25-35岁 敏感肌" value="25-35岁 敏感肌">
+      </div>
+      <div class="form-group">
+        <label>城市</label>
+        <input type="text" id="city" placeholder="如：深圳" value="深圳">
+      </div>
+    </div>
+    <div class="form-group">
+      <label>内容风格</label>
+      <select id="style">
+        <option value="真实体验分享" selected>真实体验分享</option>
+        <option value="知识科普">知识科普</option>
+        <option value="好物推荐">好物推荐</option>
+      </select>
+    </div>
+    <button class="btn btn-primary" id="generateBtn" onclick="generate()">✨ 生成文案</button>
+  </div>
+
+  <!-- Loading -->
+  <div class="card loading" id="loading">
+    <div class="spinner"></div>
+    <p>正在生成文案，约需 15-30 秒...</p>
+  </div>
+
+  <!-- Output Card -->
+  <div class="card output-area" id="outputArea">
+    <div class="output-header">
+      <h3>📄 生成结果</h3>
+      <button class="copy-btn" id="copyBtn" onclick="copyOutput()">📋 复制</button>
+    </div>
+    <div class="output-content" id="outputContent"></div>
+  </div>
+
+  <!-- Error -->
+  <div class="error" id="error"></div>
+
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+const systemPrompt = `﻿# System Prompt：医美/皮肤管理 小红书爆文助手 V2
+
+## 角色定义
+
+你是「医美小红书爆文操盘手」，专为皮肤管理诊所、医美机构设计能「出圈」的笔记内容。
+你的核心任务：根据用户输入的关键词，生成一套**完播率高、互动性好、符合平台算法偏好**的笔记素材包。
+
+## ⚠️ 合规红线（重中之重，每条必须严格遵守）
+
+以下为**广告法 + 医疗广告管理办法 + 小红书社区规范**的硬性禁令，**违反任何一条都会导致封号/罚款/吊销执照**：
+
+### ❌ 绝对禁止的词汇与行为（零容忍）
+- **绝对化用语**：最好、第一、唯一、首例、顶级、首创、极致、完美、彻底
+- **虚假承诺**：保证有效、100%有效、一次见效、立竿见影、永不复发、根治、治愈、根除、特效、速效、神效
+- **安全承诺**：安全、无痛、无毒副作用、零风险、不伤皮肤、不留疤
+- **排名/认证假象**：国家级、最高级、最佳、国际领先、荣获认证、专利技术（除非有真实专利号）
+- **冒充权威**：以医生/专家/教授身份自居，使用"据临床数据显示""医学研究表明"等
+- **患者证明**：未经允许的患者案例、名人/明星/网红推荐、患者感谢信/照片
+- **对比贬低**：直接/间接贬低其他机构、医生、品牌、项目
+- **诱导私下交易**："加微信""私聊报价""私信了解""扫码咨询"
+- **疗效暗示**：前后对比图（含文字对比、"改善90%"等量化表述）、治疗过程图
+- **医疗技术宣传**：宣传诊疗方法、治疗过程描写过于详细（如具体仪器参数、药物成分）
+- **未经审批的广告内容**：涉及具体医疗项目的疗效宣传
+
+### ✅ 必须包含的合规要素
+- ⚠️ **每篇笔记必须明确标注**：「个人体验分享，仅供参考」
+- ⚠️ **每篇笔记必须明确标注**：「建议到正规机构面诊咨询」
+- ⚠️ **涉及项目效果时，必须加**：「效果因人而异」
+- ⚠️ **杜绝任何暗示「诊疗建议」的表述**
+
+## 爆文标题公式库
+
+从以下公式中挑选 3 个不同角度生成标题，禁止重复套路：
+
+### 情绪钩子型
+- 「做了[次数]次[项目]，我[情绪词]了😭（后悔……）」
+  例：做了3次光子嫩肤，我后悔了😭（后悔没早做）
+- 「[年纪]岁被夸像[年轻X岁]，全靠每月一次[项目]💦」
+- 「千万别做[项目]，不然你会[夸张后果]……🤫」
+
+### 数字/结果型
+- 「[项目]第[X]次｜原相机直出，皮肤[变化描述]」
+- 「[预算]元做[项目]，到底值不值？我的[天数]天记录📝」
+- 「做过[项目]的人才懂：这[数字]个坑千万别踩」
+
+### 痛点/避坑型
+- 「第一次做[项目]的姐妹听劝！这[数字]件事一定要知道」
+- 「[皮肤问题]困扰[X]年，终于找到方法了…」
+- 「别再[错误认知]了！[项目]真正的作用是…」
+
+### 人设/故事型
+- 「医美顾问朋友告诉我：[项目]的秘密其实很简单」
+- 「从[皮肤状态]到[理想状态]，我只做了这件事」
+- 「[身份]闺蜜/朋友推荐做的[项目]，真香了」
+
+## 正文结构（6段式模型）
+
+每篇正文 300-600 字，按以下结构展开：
+
+### 第1段：黄金3秒开头（1-2句）
+- 用**悬念/反常识/强烈共鸣**抓住注意力
+
+### 第2段：皮肤背景（2-3句）
+- 具体描述皮肤问题，强调程度和时长，增加真实感
+
+### 第3段：决策过程（2-3句）
+- 为什么选择、怎么做功课，加入"查资料""朋友推荐""犹豫"要素
+
+### 第4段：过程描述（2-3句）
+- 带真实感细节，适当加入"恢复期有点丑"
+
+### 第5段：效果描述（3-4句）
+- 具体但不夸张，强调"个人体验因人而异"，可加入小遗憾
+
+### 第6段：结尾互动（2-3句）
+- 引导互动 + 合规提示（⚠️效果因人而异/建议面诊）
+
+## 排版与emoji规则
+
+- 每段不超过3行，段间空一行
+- 标题1-2个emoji，正文每段2-3个
+- 推荐 emoji：💡✅⚠️🔥💦✨😭🤫😱👉📝
+
+## 封面文案建议
+
+提供风格A（大字标题型）和风格B（原相机真实记录型）两种建议。
+
+## 配图/拍摄建议（5条）
+
+1. 治疗前皮肤状态（自然光）2. 过程实拍（可选）3. 恢复期记录 4. 诊所环境 5. 护肤台合影
+
+## 话题标签策略
+
+提供10-15个标签，分流量层、精准层、长尾层、地域层四层。
+
+## 写作风格规范
+
+- 人设：一个"爱美、敢尝试、真实记录"的普通女孩
+- 短句口语化，节奏快，3秒抓眼球
+- 适当暴露小缺点增加真实感
+- 每个笔记独立定制，差异化策略
+
+## 用户输入格式
+
+- 项目（必填）目标人群 风格偏好 城市 特殊要求
+
+## 输出示例框架
+
+---
+📌 标题选项
+1-3个标题
+
+📝 正文
+6段式正文
+
+🎨 封面建议
+两种风格
+
+📷 配图建议
+5条
+
+🏷️ 标签
+分层10-15个
+---
+`;
+
+function showToast(msg){
+  const t=document.getElementById('toast');
+  t.textContent=msg;t.className='toast show';
+  setTimeout(()=>t.className='toast',2000);
+}
+
+async function generate(){
+  const project=document.getElementById('project').value.trim();
+  if(!project){showToast('请填写项目名称');return;}
+
+  const audience=document.getElementById('audience').value.trim()||'未指定';
+  const city=document.getElementById('city').value.trim()||'未指定';
+  const style=document.getElementById('style').value;
+  const apiKey=document.getElementById('apiKey').value.trim();
+
+  if(!apiKey||!apiKey.startsWith('sk-')){showToast('请输入有效的 API Key');return;}
+
+  const btn=document.getElementById('generateBtn');
+  const loading=document.getElementById('loading');
+  const outputArea=document.getElementById('outputArea');
+  const errorDiv=document.getElementById('error');
+
+  btn.disabled=true;btn.textContent='⏳ 生成中...';
+  loading.className='card loading active';
+  outputArea.className='card output-area';
+  errorDiv.className='error';
+
+  const userInput = [
+    '项目：' + project,
+    '目标人群：' + audience,
+    '风格：' + style,
+    '城市：' + city
+  ].join('\n');
+
+  try{
+    const resp=await fetch('https://api.deepseek.com/chat/completions',{
+      method:'POST',
+      headers:{'Content-Type':'application/json','Authorization':'Bearer '+apiKey},
+      body:JSON.stringify({
+        model:'deepseek-chat',
+        messages:[
+          {role:'system',content:systemPrompt},
+          {role:'user',content:userInput}
+        ],
+        temperature:0.8,
+        max_tokens:2048
+      })
+    });
+
+    if(!resp.ok){
+      const err=await resp.text();
+      throw new Error('API 错误 ('+resp.status+'): '+err);
+    }
+
+    const data=await resp.json();
+    const content=data.choices[0].message.content;
+
+    // Format output
+    const formatted = content
+      .replace(/^### /gm,'')
+      .replace(/^## /gm,'')
+      .replace(/^# /gm,'');
+
+    document.getElementById('outputContent').innerHTML = formatOutput(formatted);
+    outputArea.className='card output-area active';
+    showToast('✅ 生成完成');
+  }catch(e){
+    errorDiv.textContent='❌ '+e.message;
+    errorDiv.className='error active';
+    showToast('生成失败');
+  }finally{
+    btn.disabled=false;btn.textContent='✨ 生成文案';
+    loading.className='card loading';
+  }
+}
+
+function formatOutput(text){
+  const lines=text.split('\n');
+  let html='';
+  let inSection=false;
+
+  for(let line of lines){
+    const trimmed=line.trim();
+    if(!trimmed){html+='\n';continue;}
+
+    // Section headers
+    if(/^[📌📝🎨📷🏷️]/.test(trimmed)){
+      html+='<div class="section-title">'+trimmed+'</div>';
+      inSection=true;
+    }
+    // Numbered items
+    else if(/^\d+[\.\、]/.test(trimmed)){
+      html+='<div style="margin-left:12px;margin-bottom:2px">'+trimmed+'</div>';
+    }
+    // Tags line
+    else if(/^#[#]/.test(trimmed)||trimmed.startsWith('#')){
+      html+='<div style="margin-top:6px;color:#6b2fa0;font-size:13px">'+trimmed+'</div>';
+    }
+    // Other
+    else{
+      html+='<div style="margin-bottom:2px">'+trimmed+'</div>';
+    }
+  }
+  return html;
+}
+
+async function copyOutput(){
+  const text=document.getElementById('outputContent').textContent;
+  try{
+    await navigator.clipboard.writeText(text);
+    const btn=document.getElementById('copyBtn');
+    btn.textContent='✅ 已复制';
+    btn.className='copy-btn copied';
+    setTimeout(()=>{btn.textContent='📋 复制';btn.className='copy-btn';},2000);
+  }catch{
+    showToast('复制失败，请手动选择复制');
+  }
+}
+</script>
+</body>
+</html>
