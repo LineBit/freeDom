@@ -325,7 +325,7 @@ var TYPCFG = {
 var curType = 'local';
 var SYS = { local:'你是一个抖音本地生活探店文案专家。输出格式：\n---\n📌 标题选项（3个）\n📝 正文（6段：黄金3秒→背景→环境→产品→价格→互动）\n🎬 拍摄建议（5条）\n🏷️ 推荐标签（15个）\n⚠️ 文案合规提醒\n---', shop:'你是一个抖音好物带货文案专家。输出格式：\n---\n📌 标题选项（3个）\n📝 正文（痛点→发现→体验→价格→适合谁→引导）\n📦 产品卖点\n🎬 拍摄建议（5条）\n🏷️ 推荐标签（15个）\n⚠️ 文案合规提醒\n---', edu:'你是一个抖音知识口播文案专家。输出格式：\n---\n📌 标题选项（3个）\n📝 口播脚本（反常识→观点→3论点→案例→总结）\n🎬 拍摄建议（5条）\n🏷️ 推荐标签（15个）\n⚠️ 文案合规提醒\n---', ip:'你是一个抖音个人IP文案专家。输出格式：\n---\n📌 标题选项（3个）\n📝 人设文案（身份→故事→观点→案例→价值观）\n🎬 拍摄建议（5条）\n🏷️ 推荐标签（15个）\n⚠️ 文案合规提醒\n---', emo:'你是一个抖音情感/段子文案专家。输出格式：\n---\n📌 标题选项（3个）\n📝 正文（情绪→故事→反转→金句→互动）\n🎬 拍摄建议（5条）\n🏷️ 推荐标签（15个）\n⚠️ 文案合规提醒\n---' };
 var SENS = ['最好','第一','唯一','首例','顶级','首创','极致','完美','彻底','绝对','保证','100%','一次见效','立竿见影','永不复发','安全','国家级','最高级','最佳','全网最低','史上最低','永久','免费送'];
-var DAILY_LIMIT=5;var WATERMARK='---\n🤖 由「抖音爆款文案助手」生成 · 微信: Zhanzhang091645';
+var DAILY_LIMIT=5;var BACKEND_URL="http://localhost:3000";var WATERMARK='---\n🤖 由「抖音爆款文案助手」生成 · 微信: Zhanzhang091645';
 
 function showWx(){showToast('微信: Zhanzhang091645');}
 function tst(m){var t=document.getElementById('toast');t.textContent=m;t.className='toast show';setTimeout(function(){t.className='toast';},2000);}
@@ -334,23 +334,23 @@ function rForm(){var c=TYPCFG[curType];document.getElementById('formTitle').text
 function bld(){var c=TYPCFG[curType];var p=['【内容类型】'+c.name];for(var i=0;i<c.fields.length;i++){var f=c.fields[i];var el=document.getElementById(f.id);if(!el)continue;var v=el.value.trim();if(f.lb.indexOf('*')>=0&&!v){tst('请填写：'+f.lb.replace(' *',''));return null;}if(v)p.push('【'+f.lb.replace(' *','')+'】'+v);}return p.join('\n');}
 function ckS(t){var r=[];SENS.forEach(function(w){var re=new RegExp(w,'g');var m;while((m=re.exec(t))!==null)r.push({word:w,idx:m.index});});return r.sort(function(a,b){return a.idx-b.idx;});}
 function hl(t,ws){if(!ws.length)return t;var s='',last=0;ws.forEach(function(w){if(w.idx<last)return;var end=w.idx+w.word.length;s+=t.substring(last,w.idx)+'<span class="sensitive">'+t.substring(w.idx,end)+'</span>';last=end;});s+=t.substring(last);return s;}
-async function generate(){var inp=bld();if(!inp)return;var key=document.getElementById('apiKey').value.trim();if(!key||!key.startsWith('sk-')){tst('请填写有效的API Key');return;}
-var uk='use_'+new Date().toISOString().slice(0,10);var uc=parseInt(localStorage.getItem(uk)||'0');if(uc>=DAILY_LIMIT){tst('今日免费次数已用完，加微信 Zhanzhang091645 解锁无限使用');return;}
+async function generate(){var inp=bld();if(!inp)return;
+
 var btn=document.getElementById('genBtn');var ld=document.getElementById('loading');var oa=document.getElementById('outputArea');var er=document.getElementById('errDiv');
 btn.disabled=true;btn.textContent='⏳ 生成中...';ld.className='t-card loading active';oa.className='t-card output-area';er.className='error';document.getElementById('senWarn').innerHTML='';
-try{var r=await fetch('https://api.deepseek.com/chat/completions',{method:'POST',headers:{'Content-Type':'application/json','Authorization':'Bearer '+key},body:JSON.stringify({model:'deepseek-chat',messages:[{role:'system',content:SYS[curType]},{role:'user',content:inp}],temperature:0.85,max_tokens:3072})});
-if(!r.ok){var e=await r.text();throw new Error('API\u9519\u8bef('+r.status+'): '+e);}var d=await r.json();var c=d.choices[0].message.content;var cl=c.replace(/^### /gm,'').replace(/^## /gm,'');cl=cl+'\n\n'+WATERMARK;var fs=ckS(cl);
+try{var r=await fetch(BACKEND_URL+'/api/generate',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({system:SYS[curType],user:inp})});
+var rem=r.headers.get('X-RateLimit-Remaining');if(rem!==null){var ucEl=document.getElementById('usageCnt');if(ucEl)ucEl.textContent='今日剩余：'+rem+'次';}if(!r.ok){var e=await r.json();throw new Error(e.error||'请求失败('+r.status+')');}var d=await r.json();var c=d.choices[0].message.content;var cl=c.replace(/^### /gm,'').replace(/^## /gm,'');cl=cl+'\n\n'+WATERMARK;var fs=ckS(cl);
 var h='',ls=cl.split('\n');for(var i=0;i<ls.length;i++){var t=ls[i].trim();if(!t){h+='<br>';continue;}if(/^[\ud83d\udccc\ud83d\udcdd\ud83c\udfac\ud83c\udff7\ufe0f\u26a0\ufe0f\ud83d\udce6]/.test(t)){h+='<div class="sec-title">'+t+'</div>';}else if(/^\d+[\.\u3001]/.test(t)){h+='<div style="margin-left:12px;margin-bottom:3px">'+t+'</div>';}else if(/^#/.test(t)){h+='<div style="color:#e65c00;font-size:13px;margin-top:4px">'+t+'</div>';}else{var es=t.replace(/</g,'&lt;');h+='<div style="margin-bottom:3px">'+hl(es,ckS(t))+'</div>';}}
 document.getElementById('outContent').innerHTML=h;
 var cc=cl.replace(/[\ud83d\udccc\ud83d\udcdd\ud83c\udfac\ud83c\udff7\ufe0f\u26a0\ufe0f\ud83d\udce6\s]/g,'').length;document.getElementById('wordCnt').textContent='约'+cc+'字 · 口播约'+Math.round(cc/250*60)+'秒';
 if(fs.length){var u=[];fs.forEach(function(s){if(u.indexOf(s.word)<0)u.push(s.word);});document.getElementById('senWarn').innerHTML='<div style="background:#fff8f0;border:1px solid #ffcc02;border-radius:8px;padding:10px 14px;font-size:13px">\u26a0\ufe0f \u68c0\u6d4b\u5230 <strong>'+u.length+'</strong> \u4e2a\u7591\u4f3c\u8fdd\u7981\u8bcd\uff1a<span style="color:#d32f2f;font-weight:500">'+u.join('\u3001')+'</span><br><span style="color:#8e8e93;font-size:12px">\u5efa\u8bae\u66ff\u6362\u540c\u4e49\u8bcd</span></div>';}
-localStorage.setItem(uk,uc+1);oa.className='t-card output-area active';tst('\u2705 \u751f\u6210\u5b8c\u6210');}catch(ex){er.textContent='\u274c '+ex.message;er.className='error active';tst('\u751f\u6210\u5931\u8d25');}finally{btn.disabled=false;btn.textContent='\u2728 \u4e00\u952e\u751f\u6210';ld.className='t-card loading';}}
+oa.className='t-card output-area active';tst('\u2705 \u751f\u6210\u5b8c\u6210');}catch(ex){er.textContent='\u274c '+ex.message;er.className='error active';tst('\u751f\u6210\u5931\u8d25');}finally{btn.disabled=false;btn.textContent='\u2728 \u4e00\u952e\u751f\u6210';ld.className='t-card loading';}}
 async function cpOut(){var el=document.getElementById('outContent');var t=el.textContent;if(!t.trim()){tst('没有内容');return;}try{await navigator.clipboard.writeText(t);var b=document.getElementById('copyBtn');b.textContent='\u2705 \u5df2\u590d\u5236';b.className='copy-btn copied';setTimeout(function(){b.textContent='\ud83d\udccb \u590d\u5236\u5168\u6587';b.className='copy-btn';},2000);tst('\u2705 \u5df2\u590d\u5236');}catch(s){tst('\u590d\u5236\u5931\u8d25');}}
 function clrAll(){var c=TYPCFG[curType];c.fields.forEach(function(f){var el=document.getElementById(f.id);if(el)el.value=f.val||'';});document.getElementById('outputArea').className='t-card output-area';document.getElementById('errDiv').className='error';document.getElementById('loading').className='t-card loading';document.getElementById('senWarn').innerHTML='';document.getElementById('wordCnt').textContent='';tst('\u5df2\u6e05\u7a7a');}
 rForm();
 </script>
 
-<input type="hidden" id="apiKey" value="sk-618a14a5512a4f04951f220f3483bb71">
+
 </div>
 
 </body>
