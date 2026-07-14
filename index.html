@@ -325,7 +325,7 @@ var TYPCFG = {
 var curType = 'local';
 var SYS = { local:'你是一个抖音本地生活探店文案专家。输出格式：\n---\n📌 标题选项（3个）\n📝 正文（6段：黄金3秒→背景→环境→产品→价格→互动）\n🎬 拍摄建议（5条）\n🏷️ 推荐标签（15个）\n⚠️ 文案合规提醒\n---', shop:'你是一个抖音好物带货文案专家。输出格式：\n---\n📌 标题选项（3个）\n📝 正文（痛点→发现→体验→价格→适合谁→引导）\n📦 产品卖点\n🎬 拍摄建议（5条）\n🏷️ 推荐标签（15个）\n⚠️ 文案合规提醒\n---', edu:'你是一个抖音知识口播文案专家。输出格式：\n---\n📌 标题选项（3个）\n📝 口播脚本（反常识→观点→3论点→案例→总结）\n🎬 拍摄建议（5条）\n🏷️ 推荐标签（15个）\n⚠️ 文案合规提醒\n---', ip:'你是一个抖音个人IP文案专家。输出格式：\n---\n📌 标题选项（3个）\n📝 人设文案（身份→故事→观点→案例→价值观）\n🎬 拍摄建议（5条）\n🏷️ 推荐标签（15个）\n⚠️ 文案合规提醒\n---', emo:'你是一个抖音情感/段子文案专家。输出格式：\n---\n📌 标题选项（3个）\n📝 正文（情绪→故事→反转→金句→互动）\n🎬 拍摄建议（5条）\n🏷️ 推荐标签（15个）\n⚠️ 文案合规提醒\n---' };
 var SENS = ['最好','第一','唯一','首例','顶级','首创','极致','完美','彻底','绝对','保证','100%','一次见效','立竿见影','永不复发','安全','国家级','最高级','最佳','全网最低','史上最低','永久','免费送'];
-var DAILY_LIMIT=5;var BACKEND_URL="http://localhost:3000";var WATERMARK='---\n🤖 由「抖音爆款文案助手」生成 · 微信: Zhanzhang091645';
+var DAILY_LIMIT=5;var BACKEND_URL="https://douyin-copywriter.1745860078.workers.dev";var WATERMARK='---\n🤖 由「抖音爆款文案助手」生成 · 微信: Zhanzhang091645';
 
 function showWx(){showToast('微信: Zhanzhang091645');}
 function tst(m){var t=document.getElementById('toast');t.textContent=m;t.className='toast show';setTimeout(function(){t.className='toast';},2000);}

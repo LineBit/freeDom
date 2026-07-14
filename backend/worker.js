@@ -1,7 +1,5 @@
 ﻿const RATE_LIMIT = 5;
-const DEEPSEEK_KEY = DEEPSEEK_API_KEY;
 
-// In-memory rate limit (resets on cold start, acceptable for free tier)
 const rateMap = new Map();
 
 export default {
@@ -15,13 +13,16 @@ export default {
     if (request.method === "OPTIONS") return new Response(null, { headers: cors });
     if (request.method !== "POST") return new Response(JSON.stringify({ error: "Method not allowed" }), { status: 405, headers: { "Content-Type": "application/json", ...cors } });
 
+    // Check API key
+    const DEEPSEEK_KEY = env.DEEPSEEK_API_KEY;
+    if (!DEEPSEEK_KEY) return new Response(JSON.stringify({ error: "服务器配置错误" }), { status: 500, headers: { "Content-Type": "application/json", ...cors } });
+
     // Rate limit by IP
     const ip = request.headers.get("CF-Connecting-IP") || "unknown";
     const today = new Date().toISOString().slice(0, 10);
     const key = ip + "_" + today;
     const now = Date.now();
 
-    // Clean old entries every 100 requests
     if (rateMap.size > 100) {
       const cutoff = now - 86400000;
       for (const [k, v] of rateMap) if (v.ts < cutoff) rateMap.delete(k);
@@ -29,7 +30,7 @@ export default {
 
     const record = rateMap.get(key) || { count: 0, ts: now };
     if (record.count >= RATE_LIMIT) {
-      return new Response(JSON.stringify({ error: "今日免费次数已用完（" + RATE_LIMIT + "次），加微信 Zhanzhang091645 解锁无限使用", remaining: 0 }), {
+      return new Response(JSON.stringify({ error: "今日免费次数已用完（" + RATE_LIMIT + "次），加微信 Zhanzhang091645 解锁无限使用" }), {
         status: 429,
         headers: { "Content-Type": "application/json", "X-RateLimit-Remaining": "0", ...cors }
       });
@@ -41,15 +42,12 @@ export default {
     const { system, user } = body;
     if (!user) return new Response(JSON.stringify({ error: "缺少 user 参数" }), { status: 400, headers: { "Content-Type": "application/json", ...cors } });
 
-    const apiKey = env.DEEPSEEK_API_KEY || DEEPSEEK_KEY;
-    if (!apiKey) return new Response(JSON.stringify({ error: "服务器配置错误" }), { status: 500, headers: { "Content-Type": "application/json", ...cors } });
-
     try {
       const resp = await fetch("https://api.deepseek.com/chat/completions", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
-          "Authorization": "Bearer " + apiKey
+          "Authorization": "Bearer " + DEEPSEEK_KEY
         },
         body: JSON.stringify({
           model: "deepseek-chat",
